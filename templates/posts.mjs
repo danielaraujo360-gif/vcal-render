@@ -13,6 +13,7 @@ export const PALETAS = {
   lilas:   { fundo: '#efe8ff', caixa: '#7b5cff', texto: '#ffffff', tinta: '#221550', marca: '#7b5cff', logo: '#221550' },
   coral:   { fundo: '#ffe8e1', caixa: '#ff6b4a', texto: '#ffffff', tinta: '#3d1408', marca: '#ff6b4a', logo: '#3d1408' },
   verde:   { fundo: '#e6f5ec', caixa: '#087a46', texto: '#ffffff', tinta: '#06301c', marca: '#087a46', logo: 'original' },
+  branco:  { fundo: '#ffffff', caixa: '#111114', texto: '#ffffff', tinta: '#111114', marca: '#087a46', logo: 'original' },
 };
 
 const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
