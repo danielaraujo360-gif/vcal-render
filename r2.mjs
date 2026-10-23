@@ -3,9 +3,13 @@
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import crypto from 'node:crypto';
 
-const { R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET, R2_PUBLIC_URL } = process.env;
-export const r2Ativo = !!(R2_ACCOUNT_ID && R2_ACCESS_KEY_ID && R2_SECRET_ACCESS_KEY && R2_BUCKET && R2_PUBLIC_URL);
-const cliente = r2Ativo ? new S3Client({ region: 'auto', endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`, credentials: { accessKeyId: R2_ACCESS_KEY_ID, secretAccessKey: R2_SECRET_ACCESS_KEY } }) : null;
+// Aceita os mesmos nomes do ffmpg (R2_ENDPOINT, R2_BUCKET_NAME) para copiar as variáveis de lá sem mudar nada.
+const E = process.env;
+const R2_ACCESS_KEY_ID = E.R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY = E.R2_SECRET_ACCESS_KEY, R2_PUBLIC_URL = E.R2_PUBLIC_URL;
+const R2_BUCKET = E.R2_BUCKET || E.R2_BUCKET_NAME;
+const R2_ENDPOINT = E.R2_ENDPOINT || (E.R2_ACCOUNT_ID ? `https://${E.R2_ACCOUNT_ID}.r2.cloudflarestorage.com` : '');
+export const r2Ativo = !!(R2_ENDPOINT && R2_ACCESS_KEY_ID && R2_SECRET_ACCESS_KEY && R2_BUCKET && R2_PUBLIC_URL);
+const cliente = r2Ativo ? new S3Client({ region: 'auto', endpoint: R2_ENDPOINT, credentials: { accessKeyId: R2_ACCESS_KEY_ID, secretAccessKey: R2_SECRET_ACCESS_KEY } }) : null;
 
 // Sobe o arquivo em vcal/AAAA-MM-DD/<id>.<ext> e devolve o link público.
 export async function enviar(buffer, ext, tipoConteudo) {
