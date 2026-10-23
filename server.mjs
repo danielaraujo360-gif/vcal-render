@@ -3,6 +3,7 @@
 //   POST /post       { tipo, dados, largura?, altura? }            -> { url } (ou PNG se ?formato=png)
 //   POST /carrossel  { paginas: [{ tipo, dados }], largura?, altura? } -> { urls: [...] }
 //   POST /video      { roteiro: { paleta, cenas: [{ texto, foto }], fim }, opcoes? } -> { url, duracao }
+//   POST /arquivo    { base64, ext? }                                -> { url }  (guarda foto gerada no R2)
 // Fotos podem vir como link http(s), data URI ou base64 puro. Toda chamada exige o cabeçalho X-API-Key.
 import http from 'node:http';
 import fs from 'node:fs';
@@ -51,6 +52,13 @@ const servidor = http.createServer(async (req, res) => {
       const png = await emFila(async () => renderPost(corpo.tipo, await prepararDados(corpo.dados), tam));
       if (url.searchParams.get('formato') === 'png' || !r2Ativo) { res.writeHead(200, { 'Content-Type': 'image/png' }); return res.end(png); }
       return json(res, 200, await enviar(png, 'png', 'image/png'));
+    }
+    if (url.pathname === '/arquivo') {
+      // Guarda uma foto gerada (base64 ou data URI) no R2 para reaproveitar depois ("refazer só o texto").
+      if (!r2Ativo) return json(res, 400, { erro: 'R2 não configurado' });
+      const buf = await fotoBuffer(corpo.base64 || corpo.foto);
+      const ext = corpo.ext || 'jpg';
+      return json(res, 200, await enviar(buf, ext, ext === 'png' ? 'image/png' : 'image/jpeg'));
     }
     if (url.pathname === '/carrossel') {
       const paginas = corpo.paginas || [];
