@@ -1,6 +1,6 @@
 // Modelos de post (HTML) do VCALendar. Cada modelo recebe os dados do post e devolve uma página
 // pronta para ser fotografada pelo navegador. O texto é sempre desenhado aqui, nunca pela IA de imagem.
-import { logo, celular } from './pecas.mjs';
+import { logo, celular, fontes, tela } from './pecas.mjs';
 
 // Paletas variadas e despojadas (pedido do Daniel: não só a cor da marca).
 // fundo = fundo dos cards sem foto; caixa = caixa de texto; texto = texto na caixa; tinta = texto e logo
@@ -30,7 +30,7 @@ export function destacar(titulo, destaque, estilo) {
 const tamanho = (txt, max, min, limite) => Math.max(min, Math.min(max, Math.round(max * limite / Math.max(limite, String(txt).length))));
 
 const BASE = (w, h) => `<!doctype html><html><head><meta charset="utf-8">
-<link href="https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,500;0,600;0,700;0,800;0,900;1,800;1,900&display=swap" rel="stylesheet">
+${fontes()}
 <style>*{margin:0;padding:0;box-sizing:border-box}html,body{width:${w}px;height:${h}px;overflow:hidden}
 body{font-family:Figtree,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
 .tela{position:relative;width:${w}px;height:${h}px;overflow:hidden}
@@ -85,8 +85,36 @@ export function mockup(p, w = 1080, h = 1080) {
     ${p.apoio ? `<p style="font-size:30px;font-weight:600;line-height:1.35;opacity:.75">${esc(p.apoio)}</p>` : ''}
     ${p.cta ? `<span class="chip" style="align-self:flex-start;background:${c.caixa};color:${c.texto};font-size:26px;padding:14px 26px">${esc(p.cta)}</span>` : ''}
   </div>
-  <div style="position:absolute;right:78px;top:92px">${celular({ print: p.print, largura: 450, rotacao: 4 })}</div>
+  <div style="position:absolute;right:78px;top:92px">${celular({ print: p.print || tela(p.tela), largura: 450, rotacao: 4 })}</div>
   </div></body></html>`;
 }
 
-export const MODELOS = { foto, frase, mockup };
+// ---------- CARROSSEL: capa = modelo foto ou frase (cta "Arraste pro lado"), depois item e final ----------
+// item: número grande + título + texto curto. Todas as páginas do carrossel usam a mesma paleta.
+export function item(p, w = 1080, h = 1080) {
+  const c = PALETAS[p.paleta] || PALETAS.azul;
+  const fs1 = tamanho(p.titulo, 76, 52, 30);
+  return BASE(w, h) + `<div class="tela" style="background:${c.fundo};color:${c.tinta};padding:96px 88px 160px;display:flex;flex-direction:column;justify-content:center;align-items:flex-start">
+  <div style="position:absolute;right:-140px;top:-140px;width:460px;height:460px;border-radius:50%;background:${c.caixa};opacity:.16"></div>
+  <div style="position:relative;flex:none;display:inline-grid;place-items:center;width:150px;height:150px;border-radius:44px;background:${c.caixa};color:${c.texto};font-weight:900;font-size:92px;letter-spacing:-0.04em">${esc(p.numero ?? '')}</div>
+  <h1 style="font-size:${fs1}px;margin-top:64px;max-width:880px;position:relative">${destacar(p.titulo, p.destaque, `color:${c.marca}`)}</h1>
+  ${p.apoio ? `<p style="font-size:38px;font-weight:600;line-height:1.38;margin-top:34px;max-width:860px;opacity:.78;position:relative">${esc(p.apoio)}</p>` : ''}
+  <div style="position:absolute;left:88px;right:88px;bottom:72px;display:flex;align-items:center;justify-content:space-between">
+    ${logo(c.logo, 36)}
+    <span style="font-size:26px;font-weight:700;opacity:.6">${esc(p.pagina || '')}</span>
+  </div></div></body></html>`;
+}
+
+// final: chamada para ação do carrossel, no fundo da cor forte da paleta.
+export function final(p, w = 1080, h = 1080) {
+  const c = PALETAS[p.paleta] || PALETAS.azul;
+  return BASE(w, h) + `<div class="tela" style="background:${c.caixa};color:${c.texto};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:48px;padding:0 100px;text-align:center">
+  <div style="position:absolute;right:-160px;top:-160px;width:520px;height:520px;border-radius:50%;background:#fff;opacity:.10"></div>
+  <div style="position:absolute;left:-140px;bottom:-180px;width:480px;height:480px;border-radius:50%;background:#fff;opacity:.08"></div>
+  <div style="position:relative">${logo(c.texto, 64)}</div>
+  <h1 style="font-size:${tamanho(p.titulo, 92, 64, 28)}px;position:relative">${esc(p.titulo)}</h1>
+  ${p.cta ? `<span class="chip" style="position:relative;background:${c.texto};color:${c.caixa};font-size:36px;padding:22px 46px">${esc(p.cta)}</span>` : ''}
+  </div></body></html>`;
+}
+
+export const MODELOS = { foto, frase, mockup, item, final };

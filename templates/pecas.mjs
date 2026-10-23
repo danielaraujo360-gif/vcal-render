@@ -53,3 +53,15 @@ export function celular({ print, largura = 460, rotacao = 0, hora = '9:41', fund
     </div>
   </div>`;
 }
+
+// Fontes embutidas no próprio serviço (sem depender do Google Fonts na hora de montar).
+const fonte = f => 'data:font/ttf;base64,' + fs.readFileSync(path.join(ASSETS, 'fonts', f)).toString('base64');
+let CSS_FONTES = null;
+export const fontes = () => (CSS_FONTES ||= `<style>
+@font-face{font-family:Figtree;font-style:normal;font-weight:300 900;src:url(${fonte('Figtree[wght].ttf')}) format('truetype')}
+@font-face{font-family:Figtree;font-style:italic;font-weight:300 900;src:url(${fonte('Figtree-Italic[wght].ttf')}) format('truetype')}
+</style>`);
+
+// Prints reais do app (conta de demonstração, nomes fictícios), 1170×2532 sem barra de status.
+export const TELAS = { agenda: 'agenda.webp', reserva: 'reserva.webp', caixa: 'caixa.webp', pagina: 'pagina.webp', espera: 'espera.webp', horarios: 'horarios.webp', cliente: 'cliente.webp', catalogo: 'catalogo.webp', servicos: 'servicos.webp' };
+export const tela = nome => 'data:image/webp;base64,' + fs.readFileSync(path.join(ASSETS, 'prints', TELAS[nome] || TELAS.agenda)).toString('base64');

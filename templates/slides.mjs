@@ -1,7 +1,7 @@
 // Camadas do vídeo de slides (9:16). A foto anda por baixo (zoom lento feito no ffmpeg) e o texto vem
 // por cima numa camada transparente, para a letra não "crescer" junto com o zoom.
 import { PALETAS } from './posts.mjs';
-import { logo as logoAdapt } from './pecas.mjs';
+import { logo as logoAdapt, fontes } from './pecas.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -9,7 +9,7 @@ const ASSETS = path.join(path.dirname(new URL(import.meta.url).pathname.replace(
 const logo = f => 'data:image/png;base64,' + fs.readFileSync(path.join(ASSETS, f)).toString('base64');
 const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const BASE = (w, h, fundo = 'transparent') => `<!doctype html><html><head><meta charset="utf-8">
-<link href="https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,600;0,700;0,800;0,900;1,900&display=swap" rel="stylesheet">
+${fontes()}
 <style>*{margin:0;padding:0;box-sizing:border-box}html,body{width:${w}px;height:${h}px;overflow:hidden;background:${fundo}}
 body{font-family:Figtree,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
 h1{font-weight:900;letter-spacing:-0.025em;line-height:1.04;text-wrap:balance}</style></head><body>`;
