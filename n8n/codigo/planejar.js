@@ -1,0 +1,42 @@
+// Junta o pedido (novo post ou refazer) com o que já existe no banco e monta o pedido de texto ao Claude.
+const ent = $('Gatilho').first().json;
+const res = $input.first().json.result || [];
+const ant = ((res[0] && res[0].results) || [])[0] || null;
+const temas = ((res[1] && res[1].results) || []).map(r => r.tema).filter(Boolean);
+const modo = ent.modo || 'novo';
+const conteudoAnt = ant && ant.conteudo ? JSON.parse(ant.conteudo) : null;
+const fotosAnt = ant && ant.fotos ? JSON.parse(ant.fotos) : [];
+const formato = (ant && ant.formato) || ent.formato || 'foto';
+const estado = {
+  id: ant ? ant.id : null, modo, formato,
+  bloco: (ant && ant.bloco) || ent.bloco, posicao: (ant && ant.posicao) || ent.posicao,
+  data_publicar: (ant && ant.data_publicar) || ent.data_publicar,
+  tentativa: ant ? (ant.tentativa || 1) + 1 : 1,
+  paleta: (conteudoAnt && conteudoAnt.paleta) || ent.paleta || 'rosa',
+  conteudo: conteudoAnt, fotos: fotosAnt,
+};
+const precisaTexto = modo !== 'foto' || !conteudoAnt;
+const precisaFotos = ['foto', 'carrossel', 'reels'].includes(formato) && (modo !== 'texto' || !fotosAnt.length);
+
+const SISTEMA = 'Você é o social media do VCALendar, app brasileiro de agendamento online para profissionais que atendem com hora marcada (salões, estética, cílios, unhas, sobrancelhas, barbearias, clínicas). Público: a PROFISSIONAL dona do negócio.\n' +
+  'Tom: próximo, despojado, de quem conhece a rotina do salão. Português do Brasil, frases curtas, sem jargão de tecnologia, no máximo 1 emoji por texto.\n' +
+  'FUNCIONALIDADES REAIS (use só estas, nunca invente outras nem números de resultado): agenda online por profissional; página de agendamento própria (link na bio) com catálogo e preços, a cliente marca sozinha 24h; cobrança de sinal antecipado; confirmação do horário pela cliente via WhatsApp (o horário fica reservado até ela confirmar); lista de espera para vagas que abrem; caixa (quanto recebeu por dia e por profissional); cadastro de clientes com histórico.\n' +
+  'PROIBIDO: prometer lembrete automático, mensagem automática, inteligência artificial, integrações não listadas, depoimentos ou números inventados.\n' +
+  'Responda com UM único objeto JSON válido, sem nenhum texto antes ou depois e sem se corrigir depois. Revise antes de responder.';
+const FOTO = 'em inglês, cena fotográfica realista de uma profissional brasileira de beleza (lash, unhas, sobrancelha, cabelo ou estética) trabalhando ou usando o celular/notebook no salão, luz natural, sem texto, sem logotipo';
+const COMUM = '"legenda": "até 450 caracteres, termina chamando para o link na bio", "hashtags": ["5 a 8"], "tema": "assunto em até 6 palavras"';
+const FORMATOS = {
+  foto: 'Post quadrado com foto e frase numa caixa colorida. JSON: {"titulo": "até 8 palavras", "destaque": "1 ou 2 palavras do título", "apoio": "até 12 palavras", "cta": "ex.: Leia a legenda", "prompt_foto": "' + FOTO + ', deixando a parte de baixo da imagem limpa", ' + COMUM + '}',
+  frase: 'Card colorido só com texto forte. JSON: {"rotulo": "1 a 3 palavras, ex.: Dica rápida", "titulo": "até 8 palavras", "destaque": "1 ou 2 palavras do título", "apoio": "até 14 palavras", "cta": "ex.: Link na bio", ' + COMUM + '}',
+  mockup: 'Post com o print real do app num iPhone. JSON: {"titulo": "até 7 palavras", "destaque": "1 ou 2 palavras do título", "apoio": "até 12 palavras", "cta": "ex.: Link na bio", "tela": "uma de: agenda, reserva, caixa, pagina, espera, horarios, cliente, catalogo, servicos (a que mostra a funcionalidade do texto)", ' + COMUM + '}',
+  carrossel: 'Carrossel educativo: capa com foto + 3 páginas numeradas + página final. JSON: {"capa": {"titulo": "até 8 palavras, promete uma lista", "destaque": "1 ou 2 palavras", "prompt_foto": "' + FOTO + '"}, "itens": [{"titulo": "até 7 palavras", "destaque": "1 ou 2 palavras", "apoio": "até 16 palavras, ligando à funcionalidade"}], "final": {"titulo": "até 6 palavras", "cta": "até 4 palavras"}, ' + COMUM + '} (exatamente 3 itens)',
+  reels: 'Reels de slides 9:16 contando uma pequena história (dor, virada com o VCALendar, resultado). JSON: {"cenas": [{"texto": "até 7 palavras", "prompt_foto": "' + FOTO + ', composição vertical"}], "fim": {"texto": "até 6 palavras", "botao": "até 4 palavras"}, ' + COMUM + '} (exatamente 4 cenas)',
+};
+let pedido = FORMATOS[formato] + '\nAssuntos usados recentemente (não repita): ' + (temas.slice(0, 15).join('; ') || 'nenhum') + '.';
+if (modo === 'texto' && conteudoAnt) {
+  const fotosDesc = conteudoAnt.prompt_foto || (conteudoAnt.capa && conteudoAnt.capa.prompt_foto) || (conteudoAnt.cenas || []).map(c => c.prompt_foto);
+  pedido += '\nAs fotos já existem e serão mantidas. Escreva textos NOVOS que combinem com elas, mantendo a mesma quantidade de itens/cenas. Fotos: ' + JSON.stringify(fotosDesc);
+}
+if (modo === 'tudo' && conteudoAnt) pedido += '\nA versão anterior foi recusada (tema: ' + (conteudoAnt.tema || '') + '). Faça algo diferente.';
+const pedidoClaude = { model: 'anthropic/claude-sonnet-5.5', response_format: { type: 'json_object' }, max_tokens: 2500, messages: [{ role: 'system', content: SISTEMA }, { role: 'user', content: pedido }] };
+return [{ json: { estado, precisaTexto, precisaFotos, pedidoClaude } }];
