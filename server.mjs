@@ -1,6 +1,6 @@
 // Serviço de montagem do VCALendar (roda no EasyPanel, chamado pelo n8n).
 //   GET  /health
-//   POST /post       { tipo, dados, largura?, altura? }            -> { url } (ou PNG se ?formato=png)
+//   POST /post       { tipo, dados, largura?, altura? }            -> { url } (JPG, que é o que o Instagram aceita)
 //   POST /carrossel  { paginas: [{ tipo, dados }], largura?, altura? } -> { urls: [...] }
 //   POST /video      { roteiro: { paleta, cenas: [{ texto, foto }], fim }, opcoes? } -> { url, duracao }
 //   POST /arquivo    { base64, ext? }                                -> { url }  (guarda foto gerada no R2)
@@ -50,8 +50,8 @@ const servidor = http.createServer(async (req, res) => {
 
     if (url.pathname === '/post') {
       const png = await emFila(async () => renderPost(corpo.tipo, await prepararDados(corpo.dados), tam));
-      if (url.searchParams.get('formato') === 'png' || !r2Ativo) { res.writeHead(200, { 'Content-Type': 'image/png' }); return res.end(png); }
-      return json(res, 200, await enviar(png, 'png', 'image/png'));
+      if (!r2Ativo) { res.writeHead(200, { 'Content-Type': 'image/jpeg' }); return res.end(png); }
+      return json(res, 200, await enviar(png, 'jpg', 'image/jpeg'));
     }
     if (url.pathname === '/arquivo') {
       // Guarda uma foto gerada (base64 ou data URI) no R2 para reaproveitar depois ("refazer só o texto").
@@ -64,8 +64,8 @@ const servidor = http.createServer(async (req, res) => {
       const paginas = corpo.paginas || [];
       if (paginas.length < 2 || paginas.length > 10) return json(res, 400, { erro: 'carrossel precisa de 2 a 10 páginas' });
       const pngs = await emFila(async () => { const out = []; for (const p of paginas) out.push(await renderPost(p.tipo, await prepararDados(p.dados), tam)); return out; });
-      if (!r2Ativo) return json(res, 200, { imagens: pngs.map(b => 'data:image/png;base64,' + b.toString('base64')) });
-      const urls = []; for (const b of pngs) urls.push((await enviar(b, 'png', 'image/png')).url);
+      if (!r2Ativo) return json(res, 200, { imagens: pngs.map(b => 'data:image/jpeg;base64,' + b.toString('base64')) });
+      const urls = []; for (const b of pngs) urls.push((await enviar(b, 'jpg', 'image/jpeg')).url);
       return json(res, 200, { urls });
     }
     if (url.pathname === '/video') {

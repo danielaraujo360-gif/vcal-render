@@ -14,8 +14,8 @@ async function abrir() {
 }
 export async function fechar() { if (navegador) { await navegador.close(); navegador = null; } }
 
-// Gera o PNG de um post. tipo = foto | frase | mockup. Devolve um Buffer.
-export async function renderPost(tipo, dados, { largura = 1080, altura = 1080 } = {}) {
+// Gera a imagem de um post (JPG por padrão: o Instagram só publica JPG). Devolve um Buffer.
+export async function renderPost(tipo, dados, { largura = 1080, altura = 1080, formato = 'jpeg' } = {}) {
   const modelo = MODELOS[tipo];
   if (!modelo) throw new Error('modelo desconhecido: ' + tipo);
   const b = await abrir();
@@ -23,6 +23,6 @@ export async function renderPost(tipo, dados, { largura = 1080, altura = 1080 } 
   try {
     await page.setContent(modelo(dados, largura, altura), { waitUntil: 'networkidle' });
     await page.evaluate(() => document.fonts.ready);
-    return await page.screenshot({ type: 'png' });
+    return await page.screenshot(formato === 'png' ? { type: 'png' } : { type: 'jpeg', quality: 92 });
   } finally { await page.close(); }
 }
