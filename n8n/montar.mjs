@@ -32,9 +32,9 @@ const se = (name, x, y, expr) => no(name, 'n8n-nodes-base.if', 2, x, y, {
   conditions: { options: { caseSensitive: true, leftValue: '', typeValidation: 'loose', version: 1 }, combinator: 'and',
     conditions: [{ id: name, leftValue: expr, rightValue: '', operator: { type: 'boolean', operation: 'true', singleValue: true } }] }, options: {},
 });
-const teclado = idExpr => ({ rows: [
+const teclado = (idExpr, comFoto = true) => ({ rows: [
   { row: { buttons: [{ text: '✅ Publicar', additionalFields: { callback_data: '=ok:' + idExpr } }] } },
-  { row: { buttons: [{ text: '🔄 Refazer foto', additionalFields: { callback_data: '=foto:' + idExpr } }, { text: '🔄 Refazer texto', additionalFields: { callback_data: '=texto:' + idExpr } }] } },
+  { row: { buttons: [...(comFoto ? [{ text: '🔄 Refazer foto', additionalFields: { callback_data: '=foto:' + idExpr } }] : []), { text: '🔄 Refazer texto', additionalFields: { callback_data: '=texto:' + idExpr } }] } },
   { row: { buttons: [{ text: '❌ Refazer tudo', additionalFields: { callback_data: '=tudo:' + idExpr } }] } },
 ] });
 const tg = (name, x, y, parameters) => no(name, 'n8n-nodes-base.telegram', 1.2, x, y, { chatId: CHAT, ...parameters }, { credentials: C.tg });
@@ -79,7 +79,9 @@ function wfGerar(erroId) {
     se('É Álbum?', 3300, 80, "={{ $json.tipo === 'album' && $json.midia.length === 5 }}"),
     tg('Prévia Álbum', 3520, 0, { operation: 'sendMediaGroup', media: { media: [0, 1, 2, 3, 4].map(i => ({ type: 'photo', media: `={{ $json.midia[${i}] }}`, additionalFields: i === 0 ? { caption: '={{ $json.legenda }}' } : {} })) }, additionalFields: {} }),
     tg('Botões Álbum', 3740, 0, { text: "={{ '👆 Carrossel #' + $('Mensagem Telegram').first().json.id + ' — o que faço com ele?' }}", replyMarkup: 'inlineKeyboard', inlineKeyboard: teclado("{{ $('Mensagem Telegram').first().json.id }}"), additionalFields: { appendAttribution: false } }),
-    tg('Prévia Foto', 3520, 200, { operation: 'sendPhoto', file: '={{ $json.primeira }}', replyMarkup: 'inlineKeyboard', inlineKeyboard: teclado('{{ $json.id }}'), additionalFields: { caption: '={{ $json.legenda }}' } }),
+    tg('Prévia Foto', 3740, 160, { operation: 'sendPhoto', file: '={{ $json.primeira }}', replyMarkup: 'inlineKeyboard', inlineKeyboard: teclado('{{ $json.id }}'), additionalFields: { caption: '={{ $json.legenda }}' } }),
+    se('Tem Foto?', 3520, 200, "={{ $json.tipo === 'foto' }}"),
+    tg('Prévia Sem Foto', 3740, 320, { operation: 'sendPhoto', file: '={{ $json.primeira }}', replyMarkup: 'inlineKeyboard', inlineKeyboard: teclado('{{ $json.id }}', false), additionalFields: { caption: '={{ $json.legenda }}' } }),
   ];
   return { name: 'VCAL - Gerar Post', settings: SETTINGS(erroId), nodes, connections: liga([
     ['Gatilho', 'Carregar Dados'], ['Carregar Dados', 'Planejar'], ['Planejar', 'Precisa Texto?'],
@@ -87,7 +89,7 @@ function wfGerar(erroId) {
     ['Ler Texto', 'Gerar Foto?'], ['Gerar Foto?', 'Cloudflare', 0], ['Gerar Foto?', 'Montar Pedido', 1], ['Cloudflare', 'Guardar Foto'], ['Guardar Foto', 'Montar Pedido'],
     ['Montar Pedido', 'Montar Midia'], ['Montar Midia', 'SQL Salvar'], ['SQL Salvar', 'Salvar D1'], ['Salvar D1', 'Mensagem Telegram'],
     ['Mensagem Telegram', 'É Vídeo?'], ['É Vídeo?', 'Prévia Vídeo', 0], ['É Vídeo?', 'É Álbum?', 1],
-    ['É Álbum?', 'Prévia Álbum', 0], ['É Álbum?', 'Prévia Foto', 1], ['Prévia Álbum', 'Botões Álbum'],
+    ['É Álbum?', 'Prévia Álbum', 0], ['É Álbum?', 'Tem Foto?', 1], ['Tem Foto?', 'Prévia Foto', 0], ['Tem Foto?', 'Prévia Sem Foto', 1], ['Prévia Álbum', 'Botões Álbum'],
   ]) };
 }
 

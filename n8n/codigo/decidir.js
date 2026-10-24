@@ -10,6 +10,9 @@ if (c.acao === 'ok') {
   return [{ json: { ...base, resposta: '✅ Post #' + p.id + ' aprovado! Ele sai em ' + p.data_publicar + '.', sql: { sql: "UPDATE vcal_posts SET status = 'aprovado', atualizado_em = datetime('now') WHERE id = ?", params: [p.id] } } }];
 }
 if (!nomes[c.acao]) return [{ json: { ...base, resposta: 'Botão desconhecido.' } }];
+if (c.acao === 'foto' && (p.formato === 'mockup' || p.formato === 'frase')) {
+  return [{ json: { ...base, resposta: 'O post #' + p.id + ' não tem foto (é ' + (p.formato === 'mockup' ? 'print do app' : 'frase') + '). Use "Refazer texto" ou "Refazer tudo".' } }];
+}
 if ((p.tentativa || 1) >= 3) {
   return [{ json: { ...base, resposta: 'Já foram 3 tentativas para o post #' + p.id + '. Esse horário vai ser pulado e a sequência de cores continua no próximo.', sql: { sql: "UPDATE vcal_posts SET status = 'pulado', atualizado_em = datetime('now') WHERE id = ?", params: [p.id] } } }];
 }

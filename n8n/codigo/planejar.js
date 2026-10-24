@@ -33,7 +33,9 @@ const FORMATOS = {
   reels: 'Reels de slides 9:16 contando uma pequena história (dor, virada com o VCALendar, resultado). JSON: {"cenas": [{"texto": "até 7 palavras", "prompt_foto": "' + FOTO + ', composição vertical"}], "fim": {"texto": "até 6 palavras", "botao": "até 4 palavras"}, ' + COMUM + '} (exatamente 4 cenas)',
 };
 let pedido = FORMATOS[formato] + '\nAssuntos usados recentemente (não repita): ' + (temas.slice(0, 15).join('; ') || 'nenhum') + '.';
-if (modo === 'texto' && conteudoAnt) {
+if (modo === 'texto' && conteudoAnt && conteudoAnt.tela) {
+  pedido += '\nO print do app vai continuar sendo a tela "' + conteudoAnt.tela + '". Escreva textos NOVOS sobre a funcionalidade que essa tela mostra.';
+} else if (modo === 'texto' && conteudoAnt) {
   const fotosDesc = conteudoAnt.prompt_foto || (conteudoAnt.capa && conteudoAnt.capa.prompt_foto) || (conteudoAnt.cenas || []).map(c => c.prompt_foto);
   pedido += '\nAs fotos já existem e serão mantidas. Escreva textos NOVOS que combinem com elas, mantendo a mesma quantidade de itens/cenas. Fotos: ' + JSON.stringify(fotosDesc);
 }

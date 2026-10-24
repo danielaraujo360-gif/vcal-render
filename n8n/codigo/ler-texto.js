@@ -38,6 +38,7 @@ if (p.precisaTexto) {
     if (velho.prompt_foto) c.prompt_foto = velho.prompt_foto;
     if (velho.capa && c.capa) c.capa.prompt_foto = velho.capa.prompt_foto;
     if (velho.cenas && c.cenas) c.cenas.forEach((ce, i) => { if (velho.cenas[i]) ce.prompt_foto = velho.cenas[i].prompt_foto; });
+    if (velho.tela) c.tela = velho.tela; // no print do app, a "foto" é a tela: refazer o texto mantém a mesma tela
   }
   c.paleta = est.paleta;
   est = { ...est, conteudo: c, custo_texto: (r.usage && r.usage.cost) || 0 };

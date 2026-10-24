@@ -12,5 +12,6 @@ const cab = '📅 ' + quando + ' · ' + (nomes[est.formato] || est.formato) + '\
 let leg = est.legenda || '';
 const max = 1024 - cab.length - 4;
 if (leg.length > max) leg = leg.slice(0, max - 1) + '…';
-const tipo = est.formato === 'reels' ? 'video' : est.formato === 'carrossel' ? 'album' : 'foto';
+// semfoto = print do app ou frase: a prévia não mostra o botão "Refazer foto".
+const tipo = est.formato === 'reels' ? 'video' : est.formato === 'carrossel' ? 'album' : est.formato === 'foto' ? 'foto' : 'semfoto';
 return [{ json: { id, tipo, legenda: cab + '\n\n' + leg, midia: est.midia, primeira: est.midia[0] } }];
