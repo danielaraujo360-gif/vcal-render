@@ -4,12 +4,13 @@
 //   POST /carrossel  { paginas: [{ tipo, dados }], largura?, altura? } -> { urls: [...] }
 //   POST /video      { roteiro: { paleta, cenas: [{ texto, foto }], fim }, opcoes? } -> { url, duracao }
 //   POST /arquivo    { base64, ext? }                                -> { url }  (guarda foto gerada no R2)
+//   POST /mosaico    { urls: [...] }                                 -> JPG (prévia do carrossel no Telegram)
 // Fotos podem vir como link http(s), data URI ou base64 puro. Toda chamada exige o cabeçalho X-API-Key.
 import http from 'node:http';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { renderPost } from './render.mjs';
+import { renderPost, renderMosaico } from './render.mjs';
 import { renderVideo } from './video.mjs';
 import { enviar, r2Ativo } from './r2.mjs';
 
@@ -52,6 +53,14 @@ const servidor = http.createServer(async (req, res) => {
       const png = await emFila(async () => renderPost(corpo.tipo, await prepararDados(corpo.dados), tam));
       if (!r2Ativo) { res.writeHead(200, { 'Content-Type': 'image/jpeg' }); return res.end(png); }
       return json(res, 200, await enviar(png, 'jpg', 'image/jpeg'));
+    }
+    if (url.pathname === '/mosaico') {
+      // Prévia do carrossel para o Telegram: todas as páginas numa imagem só (devolve o JPG direto).
+      const urls = (corpo.urls || []).slice(0, 10);
+      if (!urls.length) return json(res, 400, { erro: 'sem imagens' });
+      const datas = []; for (const u of urls) datas.push('data:image/jpeg;base64,' + (await fotoBuffer(u)).toString('base64'));
+      const jpg = await emFila(() => renderMosaico(datas));
+      res.writeHead(200, { 'Content-Type': 'image/jpeg' }); return res.end(jpg);
     }
     if (url.pathname === '/arquivo') {
       // Guarda uma foto gerada (base64 ou data URI) no R2 para reaproveitar depois ("refazer só o texto").
