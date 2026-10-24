@@ -127,6 +127,52 @@ function wfAprovacoes(gerarId, erroId) {
   ]) };
 }
 
+// ---------------- VCAL - Publicar (Instagram @appvcal) ----------------
+const IG = '17841430968237584';
+const GRAPH = 'https://graph.facebook.com/v21.0/';
+const C_IG = { httpHeaderAuth: { id: 'TADk0AjYNTCOXI4k', name: 'Instagram VCAL (@appvcal)' } };
+const httpIg = (name, x, y, url, corpo) => no(name, 'n8n-nodes-base.httpRequest', 4.2, x, y, {
+  method: corpo ? 'POST' : 'GET', url, authentication: 'genericCredentialType', genericAuthType: 'httpHeaderAuth',
+  ...(corpo ? { sendBody: true, specifyBody: 'json', jsonBody: corpo } : {}), options: { timeout: 120000, response: { response: { neverError: true } } },
+}, { credentials: C_IG });
+function wfPublicar(erroId) {
+  const agora = "$now.setZone('America/Sao_Paulo').toFormat('yyyy-MM-dd HH:mm')";
+  const P = "$('Preparar').first().json";
+  const nodes = [
+    no('A Cada 10 Min', 'n8n-nodes-base.scheduleTrigger', 1.2, 0, 0, { rule: { interval: [{ field: 'minutes', minutesInterval: 10 }] } }),
+    http('Buscar Vencidos', 220, 0, C.d1, D1, `={{ JSON.stringify({ sql: "UPDATE vcal_posts SET status = 'pulado', atualizado_em = datetime('now') WHERE status IN ('aguardando','gerando') AND data_publicar <= '" + ${agora} + "' RETURNING id; SELECT * FROM vcal_posts WHERE status = 'aprovado' AND data_publicar <= '" + ${agora} + "' ORDER BY data_publicar LIMIT 1;" }) }}`),
+    code('Preparar', 440, 0, 'publicar-preparar.js'),
+    se('Teve Pulado?', 660, 0, '={{ $json.pulados.length > 0 }}'),
+    tg('Avisar Pulados', 880, -120, { text: "={{ '⏭️ Não publiquei o(s) post(s) #' + $json.pulados.join(', #') + ' porque não foram aprovados até a hora. A sequência de cores continua no próximo.' }}", additionalFields: { appendAttribution: false } }),
+    se('Tem Post?', 1100, 0, `={{ ${P}.tem }}`),
+    http('Marcar Publicando', 1320, 0, C.d1, D1, `={{ JSON.stringify({ sql: "UPDATE vcal_posts SET status = 'publicando', atualizado_em = datetime('now') WHERE id = ? AND status = 'aprovado' RETURNING id", params: [${P}.id] }) }}`),
+    se('É Carrossel?', 1540, 0, `={{ ${P}.tipo === 'carrossel' }}`),
+    code('Filhos', 1760, -140, 'publicar-filhos.js'),
+    httpIg('Criar Filho', 1980, -140, GRAPH + IG + '/media', '={{ JSON.stringify($json) }}'),
+    no('Juntar Filhos', 'n8n-nodes-base.code', 2, 2200, -140, { jsCode: `const ids = $input.all().map(i => i.json.id);\nif (!ids.length || ids.some(x => !x)) throw new Error('O Instagram recusou uma das imagens do carrossel (' + String(($input.all().find(i => !i.json.id) || { json: {} }).json.error?.message || '').replace(/:/g, ' -') + ')');\nreturn [{ json: { media_type: 'CAROUSEL', children: ids.join(','), caption: ${P}.legenda } }];` }),
+    httpIg('Criar Carrossel', 2420, -140, GRAPH + IG + '/media', '={{ JSON.stringify($json) }}'),
+    httpIg('Criar Container', 1760, 120, GRAPH + IG + '/media', `={{ JSON.stringify(${P}.tipo === 'reels' ? { media_type: 'REELS', video_url: ${P}.midia[0], caption: ${P}.legenda, share_to_feed: true } : { image_url: ${P}.midia[0], caption: ${P}.legenda }) }}`),
+    code('Container', 2640, 0, 'publicar-container.js'),
+    no('Esperar 15s', 'n8n-nodes-base.wait', 1.1, 2860, 0, { amount: 15, unit: 'seconds' }, { webhookId: 'vcal-publicar-esperar' }),
+    httpIg('Status', 3080, 0, "={{ '" + GRAPH + "' + $('Container').first().json.creation_id + '?fields=status_code,status' }}"),
+    code('Avaliar', 3300, 0, 'publicar-avaliar.js'),
+    se('Pronto?', 3520, 0, '={{ $json.pronto }}'),
+    httpIg('Publicar', 3740, -100, GRAPH + IG + '/media_publish', '={{ JSON.stringify({ creation_id: $json.creation_id }) }}'),
+    httpIg('Link', 3960, -100, "={{ '" + GRAPH + "' + $('Publicar').first().json.id + '?fields=permalink' }}"),
+    http('Marcar Publicado', 4180, -100, C.d1, D1, `={{ JSON.stringify({ sql: "UPDATE vcal_posts SET status = 'publicado', ig_media_id = ?, publicado_em = datetime('now'), atualizado_em = datetime('now') WHERE id = ?", params: [$('Publicar').first().json.id, ${P}.id] }) }}`),
+    tg('Avisar Publicado', 4400, -100, { text: `={{ '✅ Post #' + ${P}.id + ' publicado no Instagram!\\n' + ($('Link').first().json.permalink || '') }}`, additionalFields: { appendAttribution: false } }),
+  ];
+  return { name: 'VCAL - Publicar', settings: SETTINGS(erroId), nodes, connections: liga([
+    ['A Cada 10 Min', 'Buscar Vencidos'], ['Buscar Vencidos', 'Preparar'], ['Preparar', 'Teve Pulado?'],
+    ['Teve Pulado?', 'Avisar Pulados', 0], ['Teve Pulado?', 'Tem Post?', 1], ['Avisar Pulados', 'Tem Post?'],
+    ['Tem Post?', 'Marcar Publicando', 0], ['Marcar Publicando', 'É Carrossel?'],
+    ['É Carrossel?', 'Filhos', 0], ['Filhos', 'Criar Filho'], ['Criar Filho', 'Juntar Filhos'], ['Juntar Filhos', 'Criar Carrossel'], ['Criar Carrossel', 'Container'],
+    ['É Carrossel?', 'Criar Container', 1], ['Criar Container', 'Container'],
+    ['Container', 'Esperar 15s'], ['Esperar 15s', 'Status'], ['Status', 'Avaliar'], ['Avaliar', 'Pronto?'],
+    ['Pronto?', 'Publicar', 0], ['Pronto?', 'Esperar 15s', 1], ['Publicar', 'Link'], ['Link', 'Marcar Publicado'], ['Marcar Publicado', 'Avisar Publicado'],
+  ]) };
+}
+
 // ---------------- criar/atualizar ----------------
 const existentes = (await api('GET', '/workflows?limit=250')).data;
 async function salvar(wf, ativar) {
@@ -143,3 +189,4 @@ const erroId = await salvar(wfErros(), true);
 const gerarId = await salvar(wfGerar(erroId), true);
 await salvar(wfPreparar(gerarId, erroId), process.argv.includes('--ativar-agenda'));
 await salvar(wfAprovacoes(gerarId, erroId), true);
+await salvar(wfPublicar(erroId), process.argv.includes('--ativar-publicacao'));

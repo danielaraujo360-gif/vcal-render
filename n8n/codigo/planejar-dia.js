@@ -18,8 +18,10 @@ const iso = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0
 const dia = q.dia || iso(amanha);
 const horarios = q.horarios ? String(q.horarios).split(',').map(s => s.trim()) : CONFIG.horarios;
 
-// Se já existe post para esse dia, não gera de novo (a não ser no teste manual).
-if (!q.dia && linhas.some(l => String(l.data_publicar).startsWith(dia))) return [];
+// Horários desse dia que já têm post não são gerados de novo (a não ser no teste manual).
+const ocupados = new Set(linhas.filter(l => String(l.data_publicar).startsWith(dia)).map(l => String(l.data_publicar).slice(11, 16)));
+const livres = q.dia ? horarios : horarios.filter(h => !ocupados.has(h));
+if (!livres.length) return [];
 
 // Continua a sequência a partir do último post válido.
 const ult = linhas[0];
@@ -27,7 +29,7 @@ let blocoIdx = ult ? CONFIG.blocos.indexOf(ult.bloco) : -1;
 let pos = ult ? Number(ult.posicao) || 3 : 3;
 let coloridos = linhas.filter(l => l.bloco === 'colorido').length;
 const out = [];
-horarios.forEach((h, i) => {
+livres.forEach((h, i) => {
   if (pos >= 3) { blocoIdx = (blocoIdx + 1) % CONFIG.blocos.length; pos = 1; } else pos++;
   const bloco = CONFIG.blocos[blocoIdx];
   const paleta = bloco === 'colorido' ? CONFIG.coloridas[coloridos++ % CONFIG.coloridas.length] : bloco;
