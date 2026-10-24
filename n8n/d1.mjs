@@ -18,6 +18,10 @@ export async function sql(consultas) {
       out.push(JSON.parse(raw));
     }
     return out;
-  } finally { try { await api('POST', `/workflows/${wf.id}/deactivate`); } catch {} await api('DELETE', `/workflows/${wf.id}`); }
+  } finally {
+    try { await api('POST', `/workflows/${wf.id}/deactivate`); } catch {}
+    // o n8n às vezes pede uns segundos entre desligar e apagar: tenta de novo em vez de quebrar
+    for (let t = 0; t < 10; t++) { try { await api('DELETE', `/workflows/${wf.id}`); break; } catch (e) { await new Promise(r => setTimeout(r, 2000)); } }
+  }
 }
 if (process.argv[2]) console.log(JSON.stringify(await sql([process.argv[2]]), null, 1));

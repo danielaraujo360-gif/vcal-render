@@ -37,7 +37,15 @@ const teclado = (idExpr, comFoto = true) => ({ rows: [
   { row: { buttons: [...(comFoto ? [{ text: '🔄 Refazer foto', additionalFields: { callback_data: '=foto:' + idExpr } }] : []), { text: '🔄 Refazer texto', additionalFields: { callback_data: '=texto:' + idExpr } }] } },
   { row: { buttons: [{ text: '❌ Refazer tudo', additionalFields: { callback_data: '=tudo:' + idExpr } }] } },
 ] });
-const tg = (name, x, y, parameters) => no(name, 'n8n-nodes-base.telegram', 1.2, x, y, { chatId: CHAT, ...parameters }, { credentials: C.tg });
+// Telegram: todo texto vai em HTML escapado (sem isso, um "_" num link ou hashtag vira itálico e a mensagem é recusada).
+const escapar = v => typeof v === 'string' && v.startsWith('={{') ? '={{ String(' + v.slice(3, -2).trim() + " ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') }}" : v;
+const tg = (name, x, y, parameters) => {
+  const p = { chatId: CHAT, ...parameters };
+  if (p.text) p.text = escapar(p.text);
+  p.additionalFields = { ...(p.additionalFields || {}), parse_mode: 'HTML' };
+  if (p.additionalFields.caption) p.additionalFields.caption = escapar(p.additionalFields.caption);
+  return no(name, 'n8n-nodes-base.telegram', 1.2, x, y, p, { credentials: C.tg });
+};
 const liga = pares => {
   const c = {};
   for (const [de, para, saida = 0] of pares) {
