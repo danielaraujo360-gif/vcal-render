@@ -4,7 +4,7 @@ const CONFIG = {
   horarios: ['09:00', '12:30', '19:00'],      // 3 por dia = 1 bloco de cor por dia = 1 linha do grid
   blocos: ['verde', 'branco', 'colorido'],          // ordem dos blocos no feed (3 posts cada = 1 linha do grid)
   coloridas: ['rosa', 'amarelo', 'azul', 'lilas', 'coral'],
-  formatos: ['foto', 'carrossel', 'mockup', 'reels', 'foto', 'frase'],
+  formatos: ['foto', 'carrossel', 'mockup', 'foto', 'frase'], // Reels fora até ter a galeria de músicas (Daniel avisa); para voltar: incluir 'reels' depois de 'mockup'
 };
 const res = $input.first().json.result || [];
 const linhas = (res[0] && res[0].results) || [];            // posts válidos, mais novos primeiro
