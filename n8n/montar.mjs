@@ -101,9 +101,13 @@ function wfPreparar(gerarId, erroId) {
     http('Historico', 240, 100, C.d1, D1, "={{ JSON.stringify({ sql: \"SELECT id, data_publicar, formato, bloco, posicao, status FROM vcal_posts WHERE status IN ('aguardando','aprovado','publicado','gerando') ORDER BY data_publicar DESC, id DESC LIMIT 30; SELECT COUNT(*) AS n FROM vcal_posts WHERE status IN ('aguardando','aprovado','publicado','gerando');\" }) }}"),
     code('Planejar Dia', 480, 100, 'planejar-dia.js'),
     no('Gerar Post', 'n8n-nodes-base.executeWorkflow', 1.1, 720, 100, { source: 'database', workflowId: { __rl: true, value: gerarId, mode: 'id' }, mode: 'each', options: { waitForSubWorkflow: true } }, { onError: 'continueRegularOutput' }),
+    no('Saldo OpenRouter', 'n8n-nodes-base.httpRequest', 4.2, 240, -160, { method: 'GET', url: 'https://openrouter.ai/api/v1/credits', authentication: 'genericCredentialType', genericAuthType: 'httpHeaderAuth', options: { timeout: 60000, response: { response: { neverError: true } } } }, { credentials: C.or }),
+    code('Checar Saude', 480, -160, 'checar-saude.js'),
+    tg('Avisar Manutencao', 720, -160, { text: '={{ $json.texto }}', additionalFields: { appendAttribution: false } }),
   ];
   return { name: 'VCAL - Preparar Dia', settings: SETTINGS(erroId), nodes, connections: liga([
-    ['Todo Dia 20h', 'Historico'], ['Gerar Agora', 'Historico'], ['Historico', 'Planejar Dia'], ['Planejar Dia', 'Gerar Post'],
+    ['Todo Dia 20h', 'Historico'], ['Todo Dia 20h', 'Saldo OpenRouter'], ['Gerar Agora', 'Historico'], ['Historico', 'Planejar Dia'], ['Planejar Dia', 'Gerar Post'],
+    ['Saldo OpenRouter', 'Checar Saude'], ['Checar Saude', 'Avisar Manutencao'],
   ]) };
 }
 
