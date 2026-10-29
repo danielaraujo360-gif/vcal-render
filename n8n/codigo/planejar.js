@@ -23,7 +23,15 @@ const SISTEMA = 'Você é o social media do VCALendar, app brasileiro de agendam
   'FUNCIONALIDADES REAIS (use só estas, nunca invente outras nem números de resultado): agenda online por profissional; página de agendamento própria (link na bio) com catálogo e preços, a cliente marca sozinha 24h; cobrança de sinal antecipado; confirmação do horário pela cliente via WhatsApp (o horário fica reservado até ela confirmar); lista de espera para vagas que abrem; caixa (quanto recebeu por dia e por profissional); cadastro de clientes com histórico.\n' +
   'PROIBIDO: prometer lembrete automático, mensagem automática, inteligência artificial, integrações não listadas, depoimentos ou números inventados.\n' +
   'Responda com UM único objeto JSON válido, sem nenhum texto antes ou depois e sem se corrigir depois. Revise antes de responder.';
-const FOTO = 'em inglês, cena fotográfica realista de uma profissional brasileira de beleza (lash, unhas, sobrancelha, cabelo ou estética) trabalhando ou usando o celular/notebook no salão, luz natural, sem texto, sem logotipo';
+// Campanha de fim de ano (pedido do Daniel em 29/10): até 31/12 todos os posts giram em torno da correria de dezembro.
+// Cada fase vale pela data de publicação; depois de 31/12 volta ao normal sozinho.
+const diaPub = String(estado.data_publicar || '').slice(0, 10);
+const CAMPANHA = diaPub >= '2026-10-30' && diaPub <= '2026-11-30' ? 'prepare-se para dezembro: a correria de fim de ano está chegando (festas, confraternizações, Natal, Réveillon), quem organiza a agenda agora não passa sufoco depois; abrir os horários de dezembro na página de agendamento, cobrar sinal para garantir as datas mais disputadas e evitar faltas, lista de espera para não perder cliente quando alguém desmarca'
+  : diaPub >= '2026-12-01' && diaPub <= '2026-12-24' ? 'dezembro chegou: agenda lotada, festas, confraternizações e Natal; a cliente marca sozinha 24h pelo link sem você parar o atendimento para responder WhatsApp, o sinal garante quem realmente vem, a lista de espera preenche as desistências; clima natalino bonito e acolhedor, "você não precisa passar sufoco este ano"'
+  : diaPub >= '2026-12-25' && diaPub <= '2026-12-31' ? 'fim de ano e Réveillon: últimos horários do ano, fechar o caixa de dezembro vendo quanto recebeu, já deixar a agenda de janeiro aberta; tom de celebração e gratidão pelo ano'
+  : '';
+const FOTO = 'em inglês, cena fotográfica realista de uma profissional brasileira de beleza (lash, unhas, sobrancelha, cabelo ou estética) trabalhando ou usando o celular/notebook no salão, luz natural, sem texto, sem logotipo' +
+  (CAMPANHA ? ', salão com decoração de Natal elegante e discreta (luzinhas quentes, pequenos enfeites dourados e vermelhos, árvore ao fundo desfocada)' : '');
 const COMUM = '"legenda": "até 450 caracteres, termina chamando para o link na bio", "hashtags": ["5 a 8"], "tema": "assunto em até 6 palavras"';
 const FORMATOS = {
   foto: 'Post quadrado com foto e frase numa caixa colorida. JSON: {"titulo": "até 8 palavras", "destaque": "1 ou 2 palavras do título", "apoio": "até 12 palavras", "cta": "ex.: Leia a legenda", "prompt_foto": "' + FOTO + ', deixando a parte de baixo da imagem limpa", ' + COMUM + '}',
@@ -33,6 +41,7 @@ const FORMATOS = {
   reels: 'Reels de slides 9:16 contando uma pequena história (dor, virada com o VCALendar, resultado). JSON: {"cenas": [{"texto": "até 7 palavras", "prompt_foto": "' + FOTO + ', composição vertical"}], "fim": {"texto": "até 6 palavras", "botao": "até 4 palavras"}, ' + COMUM + '} (exatamente 4 cenas)',
 };
 let pedido = FORMATOS[formato] + '\nAssuntos usados recentemente (não repita): ' + (temas.slice(0, 15).join('; ') || 'nenhum') + '.';
+if (CAMPANHA) pedido += '\nCAMPANHA DE FIM DE ANO — o post inteiro (texto, foto e legenda) deve girar em torno disto: ' + CAMPANHA + '. Copy bonita e emocional, com cara de Natal, sem ficar brega. Na legenda, convide a testar o VCALendar: 30 dias grátis, sem cartão, link na bio.';
 if (modo === 'texto' && conteudoAnt && conteudoAnt.tela) {
   pedido += '\nO print do app vai continuar sendo a tela "' + conteudoAnt.tela + '". Escreva textos NOVOS sobre a funcionalidade que essa tela mostra.';
 } else if (modo === 'texto' && conteudoAnt) {
