@@ -1,7 +1,7 @@
 // Decide os posts do dia seguinte: horário, formato, bloco de cor (3 seguidos por bloco) e cor de cada um.
 // Pode ser chamado à mão pelo webhook com ?dia=AAAA-MM-DD&horarios=11:30,19:00&formato=reels para testar.
 const CONFIG = {
-  horarios: ['09:00', '12:30', '19:00'],      // 3 por dia = 1 bloco de cor por dia = 1 linha do grid
+  horarios: ['19:00'],                        // 1 por dia a pedido do Daniel (29/10); antes 09:00, 12:30, 19:00 — cada bloco de cor = 3 dias
   blocos: ['verde', 'branco', 'colorido'],          // ordem dos blocos no feed (3 posts cada = 1 linha do grid)
   coloridas: ['rosa', 'amarelo', 'azul', 'lilas', 'coral'],
   formatos: ['foto', 'carrossel', 'mockup', 'foto', 'frase'], // Reels fora até ter a galeria de músicas (Daniel avisa); para voltar: incluir 'reels' depois de 'mockup'
