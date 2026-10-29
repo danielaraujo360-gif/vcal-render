@@ -26,10 +26,21 @@ const SISTEMA = 'Você é o social media do VCALendar, app brasileiro de agendam
 // Campanha de fim de ano (pedido do Daniel em 29/10): até 31/12 todos os posts giram em torno da correria de dezembro.
 // Cada fase vale pela data de publicação; depois de 31/12 volta ao normal sozinho.
 const diaPub = String(estado.data_publicar || '').slice(0, 10);
-const CAMPANHA = diaPub >= '2026-10-30' && diaPub <= '2026-11-30' ? 'prepare-se para dezembro: a correria de fim de ano está chegando (festas, confraternizações, Natal, Réveillon), quem organiza a agenda agora não passa sufoco depois; abrir os horários de dezembro na página de agendamento, cobrar sinal para garantir as datas mais disputadas e evitar faltas, lista de espera para não perder cliente quando alguém desmarca'
+const CAMPANHA = diaPub >= '2026-10-29' && diaPub <= '2026-11-30' ? 'prepare-se para dezembro: a correria de fim de ano está chegando (festas, confraternizações, Natal, Réveillon), quem organiza a agenda agora não passa sufoco depois; abrir os horários de dezembro na página de agendamento, cobrar sinal para garantir as datas mais disputadas e evitar faltas, lista de espera para não perder cliente quando alguém desmarca'
   : diaPub >= '2026-12-01' && diaPub <= '2026-12-24' ? 'dezembro chegou: agenda lotada, festas, confraternizações e Natal; a cliente marca sozinha 24h pelo link sem você parar o atendimento para responder WhatsApp, o sinal garante quem realmente vem, a lista de espera preenche as desistências; clima natalino bonito e acolhedor, "você não precisa passar sufoco este ano"'
   : diaPub >= '2026-12-25' && diaPub <= '2026-12-31' ? 'fim de ano e Réveillon: últimos horários do ano, fechar o caixa de dezembro vendo quanto recebeu, já deixar a agenda de janeiro aberta; tom de celebração e gratidão pelo ano'
   : '';
+// Um ângulo por post (sem isso os 3 posts do mesmo bloco saíram com o mesmo texto): gira pelo dia + posição no bloco.
+const ANGULOS = [
+  'a cliente marca sozinha pelo link, até de madrugada, enquanto você descansa ou atende',
+  'cobrar sinal para segurar as datas mais disputadas (sexta e sábado antes do Natal, véspera do Réveillon) e acabar com o bolo',
+  'lista de espera: quando alguém desmarca em dezembro, a vaga não fica vazia',
+  'parar de passar o fim de ano respondendo WhatsApp em vez de atender quem está na cadeira',
+  'página própria com catálogo e preços dos serviços de festa, para a cliente escolher e marcar',
+  'caixa do dia e por profissional: saber quanto dezembro rendeu de verdade',
+  'histórico da cliente: lembrar o que ela fez na festa do ano passado e oferecer de novo',
+];
+const ANGULO = CAMPANHA ? ANGULOS[(Number(diaPub.slice(8, 10)) * 3 + Number(estado.posicao || 1) + (estado.tentativa || 1) - 1) % ANGULOS.length] : '';
 const FOTO = 'em inglês, cena fotográfica realista de uma profissional brasileira de beleza (lash, unhas, sobrancelha, cabelo ou estética) trabalhando ou usando o celular/notebook no salão, luz natural, sem texto, sem logotipo' +
   (CAMPANHA ? ', salão com decoração de Natal elegante e discreta (luzinhas quentes, pequenos enfeites dourados e vermelhos, árvore ao fundo desfocada)' : '');
 const COMUM = '"legenda": "até 450 caracteres, termina chamando para o link na bio", "hashtags": ["5 a 8"], "tema": "assunto em até 6 palavras"';
@@ -41,7 +52,7 @@ const FORMATOS = {
   reels: 'Reels de slides 9:16 contando uma pequena história (dor, virada com o VCALendar, resultado). JSON: {"cenas": [{"texto": "até 7 palavras", "prompt_foto": "' + FOTO + ', composição vertical"}], "fim": {"texto": "até 6 palavras", "botao": "até 4 palavras"}, ' + COMUM + '} (exatamente 4 cenas)',
 };
 let pedido = FORMATOS[formato] + '\nAssuntos usados recentemente (não repita): ' + (temas.slice(0, 15).join('; ') || 'nenhum') + '.';
-if (CAMPANHA) pedido += '\nCAMPANHA DE FIM DE ANO — o post inteiro (texto, foto e legenda) deve girar em torno disto: ' + CAMPANHA + '. Copy bonita e emocional, com cara de Natal, sem ficar brega. Na legenda, convide a testar o VCALendar: 30 dias grátis, sem cartão, link na bio.';
+if (CAMPANHA) pedido += '\nCAMPANHA DE FIM DE ANO — o post inteiro (texto, foto e legenda) deve girar em torno disto: ' + CAMPANHA + '. ÂNGULO DESTE POST (o título e o texto falam SÓ disto, não liste todas as funções): ' + ANGULO + '. Copy bonita e emocional, com cara de Natal, sem ficar brega. Na legenda, convide a testar o VCALendar: 30 dias grátis, sem cartão, link na bio.';
 if (modo === 'texto' && conteudoAnt && conteudoAnt.tela) {
   pedido += '\nO print do app vai continuar sendo a tela "' + conteudoAnt.tela + '". Escreva textos NOVOS sobre a funcionalidade que essa tela mostra.';
 } else if (modo === 'texto' && conteudoAnt) {
