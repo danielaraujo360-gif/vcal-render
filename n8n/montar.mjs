@@ -146,7 +146,7 @@ function wfAprovacoes(gerarId, erroId) {
 }
 
 // ---------------- VCAL - Publicar (Instagram @appvcal) ----------------
-const IG = '17841430968237584';
+const IG = '17841430968237584', PAGINA = '1433562539832721';
 const GRAPH = 'https://graph.facebook.com/v21.0/';
 const C_IG = { httpHeaderAuth: { id: 'TADk0AjYNTCOXI4k', name: 'Instagram VCAL (@appvcal)' } };
 const httpIg = (name, x, y, url, corpo) => no(name, 'n8n-nodes-base.httpRequest', 4.2, x, y, {
@@ -179,6 +179,12 @@ function wfPublicar(erroId) {
     httpIg('Link', 3960, -100, "={{ '" + GRAPH + "' + $('Publicar').first().json.id + '?fields=permalink' }}"),
     http('Marcar Publicado', 4180, -100, C.d1, D1, `={{ JSON.stringify({ sql: "UPDATE vcal_posts SET status = 'publicado', ig_media_id = ?, publicado_em = datetime('now'), atualizado_em = datetime('now') WHERE id = ?", params: [$('Publicar').first().json.id, ${P}.id] }) }}`),
     tg('Avisar Publicado', 4400, -100, { text: `={{ '✅ Post #' + ${P}.id + ' publicado no Instagram!\\n' + ($('Link').first().json.permalink || '') }}`, additionalFields: { appendAttribution: false } }),
+    // página do Facebook (mesmo token: é token da página VCALendar, com pages_manage_posts)
+    code('FB Preparar', 4620, -100, 'publicar-facebook.js'),
+    httpIg('FB Enviar', 4840, -100, "={{ '" + GRAPH + PAGINA + "/' + $json.rota }}", '={{ JSON.stringify($json.corpo) }}'),
+    no('FB Juntar', 'n8n-nodes-base.code', 2, 5060, -100, { jsCode: `const r = $input.all().map(i => i.json);\nconst falha = r.find(x => !x.id);\nif (falha) throw new Error('Publicado no Instagram, mas o Facebook recusou (' + String(falha.error?.message || 'sem resposta').replace(/:/g, ' -') + ')');\nif (${P}.tipo !== 'carrossel') return [];\nreturn [{ json: { message: ${P}.legenda, attached_media: r.map(x => ({ media_fbid: x.id })) } }];` }),
+    httpIg('FB Post Carrossel', 5280, -100, GRAPH + PAGINA + '/feed', '={{ JSON.stringify($json) }}'),
+    no('FB Conferir', 'n8n-nodes-base.code', 2, 5500, -100, { jsCode: `if (!$json.id) throw new Error('Publicado no Instagram, mas o Facebook recusou o carrossel (' + String($json.error?.message || 'sem resposta').replace(/:/g, ' -') + ')');\nreturn [];` }),
   ];
   return { name: 'VCAL - Publicar', settings: SETTINGS(erroId), nodes, connections: liga([
     ['A Cada 10 Min', 'Buscar Vencidos'], ['Buscar Vencidos', 'Preparar'], ['Preparar', 'Teve Pulado?'],
@@ -188,6 +194,7 @@ function wfPublicar(erroId) {
     ['É Carrossel?', 'Criar Container', 1], ['Criar Container', 'Container'],
     ['Container', 'Esperar 15s'], ['Esperar 15s', 'Status'], ['Status', 'Avaliar'], ['Avaliar', 'Pronto?'],
     ['Pronto?', 'Publicar', 0], ['Pronto?', 'Esperar 15s', 1], ['Publicar', 'Link'], ['Link', 'Marcar Publicado'], ['Marcar Publicado', 'Avisar Publicado'],
+    ['Avisar Publicado', 'FB Preparar'], ['FB Preparar', 'FB Enviar'], ['FB Enviar', 'FB Juntar'], ['FB Juntar', 'FB Post Carrossel'], ['FB Post Carrossel', 'FB Conferir'],
   ]) };
 }
 
