@@ -4,7 +4,7 @@ const CONFIG = {
   janelas: [[8, 10], [11, 13], [15, 17], [19, 21]], // 4 por dia desde 30/10, sem aprovação; hora sorteada em cada janela (pedido do Daniel: nada de horário fixo)
   blocos: ['verde', 'branco', 'colorido'],          // ordem dos blocos no feed (3 posts cada = 1 linha do grid)
   coloridas: ['rosa', 'amarelo', 'azul', 'lilas', 'coral'],
-  formatos: ['foto', 'carrossel', 'mockup', 'foto', 'frase'], // Reels fora até ter a galeria de músicas (Daniel avisa); para voltar: incluir 'reels' depois de 'mockup'
+  formatos: ['meme', 'foto', 'meme', 'carrossel', 'meme', 'mockup', 'meme', 'frase'], // metade meme, metade técnico (campanha de dezembro). Reels fora até ter a galeria de músicas (Daniel avisa); para voltar: incluir 'reels' depois de 'mockup'
 };
 const res = $input.first().json.result || [];
 const linhas = (res[0] && res[0].results) || [];            // posts válidos, mais novos primeiro
