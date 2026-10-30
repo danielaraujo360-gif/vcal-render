@@ -1,7 +1,7 @@
 // Decide os posts do dia seguinte: horário, formato, bloco de cor (3 seguidos por bloco) e cor de cada um.
 // Pode ser chamado à mão pelo webhook com ?dia=AAAA-MM-DD&horarios=11:30,19:00&formato=reels para testar.
 const CONFIG = {
-  horarios: ['09:00', '12:30', '19:00'],      // 3 por dia = 1 bloco de cor por dia = 1 linha do grid
+  janelas: [[8, 10], [11, 13], [15, 17], [19, 21]], // 4 por dia desde 30/10, sem aprovação; hora sorteada em cada janela (pedido do Daniel: nada de horário fixo)
   blocos: ['verde', 'branco', 'colorido'],          // ordem dos blocos no feed (3 posts cada = 1 linha do grid)
   coloridas: ['rosa', 'amarelo', 'azul', 'lilas', 'coral'],
   formatos: ['foto', 'carrossel', 'mockup', 'foto', 'frase'], // Reels fora até ter a galeria de músicas (Daniel avisa); para voltar: incluir 'reels' depois de 'mockup'
@@ -16,11 +16,12 @@ const agora = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/S
 const amanha = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate() + 1);
 const iso = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 const dia = q.dia || iso(amanha);
-const horarios = q.horarios ? String(q.horarios).split(',').map(s => s.trim()) : CONFIG.horarios;
+const sortear = ([a, b]) => String(a + Math.floor(Math.random() * (b - a))).padStart(2, '0') + ':' + String(Math.floor(Math.random() * 60)).padStart(2, '0');
 
-// Horários desse dia que já têm post não são gerados de novo (a não ser no teste manual).
-const ocupados = new Set(linhas.filter(l => String(l.data_publicar).startsWith(dia)).map(l => String(l.data_publicar).slice(11, 16)));
-const livres = q.dia ? horarios : horarios.filter(h => !ocupados.has(h));
+// Janela desse dia que já tem post não gera outro (a não ser no teste manual, com ?horarios=).
+const horasDoDia = linhas.filter(l => String(l.data_publicar).startsWith(dia)).map(l => Number(String(l.data_publicar).slice(11, 13)));
+const livres = q.horarios ? String(q.horarios).split(',').map(s => s.trim())
+  : CONFIG.janelas.filter(([a, b]) => !horasDoDia.some(h => h >= a && h < b)).map(sortear);
 if (!livres.length) return [];
 
 // Continua a sequência a partir do último post válido.

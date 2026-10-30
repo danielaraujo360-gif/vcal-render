@@ -118,4 +118,25 @@ export function final(p, w = 1080, h = 1080) {
   </div></body></html>`;
 }
 
-export const MODELOS = { foto, frase, mockup, item, final };
+// ---------- MEME (1080×1350): foto + piada; logo bem discreta no canto, sem chamada de venda na imagem ----------
+// estilo: whatsapp (faixa branca + conversa), pov (texto embaixo sobre a foto), faixa (tarja rosa inclinada)
+export function meme(p, w = 1080, h = 1350) {
+  const n = String(p.titulo || '').length;
+  const fundoFoto = `<img src="${p.foto}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center">`;
+  const marca = `<div style="position:absolute;right:34px;bottom:30px;opacity:.6">${logo('#ffffff', 27, true)}</div>`;
+  let corpo;
+  if (p.estilo === 'whatsapp') {
+    const fs1 = Math.min(100, Math.floor(1000 / (0.4 * n)));      // Anton: ~0,4 em por letra, sempre numa linha só
+    const bolha = (txt, hora, minha) => `<div style="background:${minha ? '#d9fdd3' : '#fff'};border-radius:18px;padding:18px 24px;width:max-content;max-width:92%;${minha ? 'margin:20px 0 0 auto' : ''}">${esc(txt)}<span style="font-size:22px;color:#667781;margin-left:18px;white-space:nowrap">${hora}${minha ? ' ✓✓' : ''}</span></div>`;
+    corpo = `<div style="position:absolute;left:0;right:0;top:70px;height:172px;background:#fff;display:flex;align-items:center;justify-content:center"><div style="font:400 ${fs1}px Anton;color:#0b0b0b;white-space:nowrap">${esc(p.titulo)}</div></div>
+    <div style="position:absolute;left:110px;right:110px;top:292px;background:#efeae2;border-radius:24px;padding:30px 28px;box-shadow:0 14px 40px rgba(0,0,0,.45);font-size:36px;font-weight:500;color:#111b21">${bolha(p.msg1, '21:47', false)}${bolha(p.msg2, '21:48', true)}</div>`;
+  } else if (p.estilo === 'faixa') {
+    corpo = `<div style="position:absolute;left:-20px;right:-20px;bottom:120px;background:#e23d7c;transform:rotate(-2deg);padding:26px 60px 30px;text-align:center;box-shadow:0 10px 30px rgba(120,20,60,.4)"><div style="font:400 ${n > 34 ? 68 : 84}px/1.14 Anton;color:#fff;letter-spacing:.5px;text-transform:uppercase;text-wrap:balance">${esc(p.titulo)}</div></div>`;
+  } else {
+    corpo = `<div style="position:absolute;left:0;right:0;bottom:0;height:560px;background:linear-gradient(transparent,rgba(0,0,0,.84) 62%)"></div>
+    <div style="position:absolute;left:60px;right:60px;bottom:96px;text-align:center;font-weight:800;font-size:${n > 70 ? 52 : 62}px;line-height:1.16;color:#fff;text-shadow:0 3px 14px rgba(0,0,0,.7);text-wrap:balance">${esc(p.titulo)}</div>`;
+  }
+  return BASE(w, h) + `<div class="tela">${fundoFoto}${corpo}${marca}</div></body></html>`;
+}
+
+export const MODELOS = { foto, frase, mockup, item, final, meme };

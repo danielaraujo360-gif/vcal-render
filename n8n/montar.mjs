@@ -1,6 +1,6 @@
 // Cria ou atualiza no n8n os workflows da automação de posts do VCALendar (por nome).
 //   VCAL - Erros               -> avisa no Telegram quando algum fluxo falha
-//   VCAL - Gerar Post          -> sub-fluxo: texto (Claude) + fotos (Cloudflare) + montagem (vcal-render) + banco + prévia no Telegram
+//   VCAL - Gerar Post          -> sub-fluxo: texto (Claude) + fotos (Cloudflare) + montagem (vcal-render) + banco, já aprovado
 //   VCAL - Preparar Dia        -> todo dia 21:15, depois de a cota do Cloudflare renovar às 21h (ou à mão pelo webhook) decide os posts de amanhã e chama o Gerar Post
 //   VCAL - Aprovacoes Telegram -> botões da prévia: aprovar, refazer foto/texto/tudo
 import fs from 'node:fs';
@@ -81,27 +81,12 @@ function wfGerar(erroId) {
     http('Montar Midia', 2200, 0, C.render, "={{ '" + RENDER + "' + $json.rota }}", '={{ JSON.stringify($json.corpo) }}', { timeout: 300000, retry: true }),
     code('SQL Salvar', 2420, 0, 'sql-salvar.js'),
     http('Salvar D1', 2640, 0, C.d1, D1, '={{ JSON.stringify({ sql: $json.sql, params: $json.params }) }}'),
-    code('Mensagem Telegram', 2860, 0, 'mensagem-telegram.js'),
-    // Prévias vão como ARQUIVO (o Telegram às vezes não consegue baixar pelo link do r2.dev).
-    // Carrossel vira um mosaico numa imagem só, com os botões na mesma mensagem.
-    se('É Carrossel?', 3080, 0, "={{ $json.tipo === 'album' }}"),
-    no('Baixar Mosaico', 'n8n-nodes-base.httpRequest', 4.2, 3300, -160, { method: 'POST', url: RENDER + '/mosaico', authentication: 'genericCredentialType', genericAuthType: 'httpHeaderAuth', sendBody: true, specifyBody: 'json', jsonBody: '={{ JSON.stringify({ urls: $json.midia }) }}', options: { timeout: 120000, response: { response: { responseFormat: 'file' } } } }, { credentials: C.render, retryOnFail: true, maxTries: 3, waitBetweenTries: 3000 }),
-    tg('Prévia Carrossel', 3520, -160, { operation: 'sendPhoto', binaryData: true, binaryPropertyName: 'data', replyMarkup: 'inlineKeyboard', inlineKeyboard: teclado("{{ $('Mensagem Telegram').first().json.id }}"), additionalFields: { caption: "={{ $('Mensagem Telegram').first().json.legenda }}" } }),
-    no('Baixar Mídia', 'n8n-nodes-base.httpRequest', 4.2, 3300, 100, { method: 'GET', url: '={{ $json.primeira }}', options: { timeout: 120000, response: { response: { responseFormat: 'file' } } } }, { retryOnFail: true, maxTries: 3, waitBetweenTries: 3000 }),
-    se('É Vídeo?', 3520, 100, "={{ $('Mensagem Telegram').first().json.tipo === 'video' }}"),
-    tg('Prévia Vídeo', 3740, 0, { operation: 'sendVideo', binaryData: true, binaryPropertyName: 'data', replyMarkup: 'inlineKeyboard', inlineKeyboard: teclado("{{ $('Mensagem Telegram').first().json.id }}"), additionalFields: { caption: "={{ $('Mensagem Telegram').first().json.legenda }}" } }),
-    se('Tem Foto?', 3740, 200, "={{ $('Mensagem Telegram').first().json.tipo === 'foto' }}"),
-    tg('Prévia Foto', 3960, 140, { operation: 'sendPhoto', binaryData: true, binaryPropertyName: 'data', replyMarkup: 'inlineKeyboard', inlineKeyboard: teclado("{{ $('Mensagem Telegram').first().json.id }}"), additionalFields: { caption: "={{ $('Mensagem Telegram').first().json.legenda }}" } }),
-    tg('Prévia Sem Foto', 3960, 300, { operation: 'sendPhoto', binaryData: true, binaryPropertyName: 'data', replyMarkup: 'inlineKeyboard', inlineKeyboard: teclado("{{ $('Mensagem Telegram').first().json.id }}", false), additionalFields: { caption: "={{ $('Mensagem Telegram').first().json.legenda }}" } }),
   ];
   return { name: 'VCAL - Gerar Post', settings: SETTINGS(erroId), nodes, connections: liga([
     ['Gatilho', 'Carregar Dados'], ['Carregar Dados', 'Planejar'], ['Planejar', 'Precisa Texto?'],
     ['Precisa Texto?', 'Claude', 0], ['Precisa Texto?', 'Ler Texto', 1], ['Claude', 'Ler Texto'],
     ['Ler Texto', 'Gerar Foto?'], ['Gerar Foto?', 'Cloudflare', 0], ['Gerar Foto?', 'Montar Pedido', 1], ['Cloudflare', 'Guardar Foto'], ['Guardar Foto', 'Montar Pedido'],
-    ['Montar Pedido', 'Montar Midia'], ['Montar Midia', 'SQL Salvar'], ['SQL Salvar', 'Salvar D1'], ['Salvar D1', 'Mensagem Telegram'],
-    ['Mensagem Telegram', 'É Carrossel?'], ['É Carrossel?', 'Baixar Mosaico', 0], ['Baixar Mosaico', 'Prévia Carrossel'],
-    ['É Carrossel?', 'Baixar Mídia', 1], ['Baixar Mídia', 'É Vídeo?'], ['É Vídeo?', 'Prévia Vídeo', 0], ['É Vídeo?', 'Tem Foto?', 1],
-    ['Tem Foto?', 'Prévia Foto', 0], ['Tem Foto?', 'Prévia Sem Foto', 1],
+    ['Montar Pedido', 'Montar Midia'], ['Montar Midia', 'SQL Salvar'], ['SQL Salvar', 'Salvar D1'], 
   ]) };
 }
 

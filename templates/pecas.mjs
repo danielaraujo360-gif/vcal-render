@@ -58,6 +58,7 @@ export function celular({ print, largura = 460, rotacao = 0, hora = '9:41', fund
 const fonte = f => 'data:font/ttf;base64,' + fs.readFileSync(path.join(ASSETS, 'fonts', f)).toString('base64');
 let CSS_FONTES = null;
 export const fontes = () => (CSS_FONTES ||= `<style>
+@font-face{font-family:Anton;src:url(${fonte('Anton.ttf')}) format('truetype')}
 @font-face{font-family:Figtree;font-style:normal;font-weight:300 900;src:url(${fonte('Figtree[wght].ttf')}) format('truetype')}
 @font-face{font-family:Figtree;font-style:italic;font-weight:300 900;src:url(${fonte('Figtree-Italic[wght].ttf')}) format('truetype')}
 </style>`);

@@ -1,4 +1,4 @@
-// Grava (ou atualiza) o post no banco com status "aguardando" a aprovação.
+// Grava (ou atualiza) o post já aprovado: desde 30/10 o Daniel não aprova mais, publica direto na hora marcada.
 const est = $('Montar Pedido').first().json.estado;
 const r = $input.first().json;
 const midia = r.urls ? r.urls : [r.url];
@@ -7,7 +7,7 @@ const c = est.conteudo;
 const legenda = (c.legenda || '').trim() + '\n\n' + (c.hashtags || []).join(' ');
 const vals = {
   data_publicar: est.data_publicar, formato: est.formato, bloco: est.bloco, posicao: est.posicao, tentativa: est.tentativa,
-  status: 'aguardando', tema: c.tema || c.titulo || (c.capa && c.capa.titulo) || '',
+  status: 'aprovado', tema: c.tema || c.titulo || (c.capa && c.capa.titulo) || '',
   conteudo: JSON.stringify(c), fotos: JSON.stringify(est.fotos || []), midia: JSON.stringify(midia), legenda,
 };
 const chaves = Object.keys(vals);

@@ -9,6 +9,8 @@ const c = est.conteudo, pal = est.paleta;
 let rota, corpo;
 if (est.formato === 'foto') {
   rota = '/post'; corpo = { tipo: 'foto', dados: { paleta: pal, titulo: c.titulo, destaque: c.destaque, apoio: c.apoio, cta: c.cta, foto: fotos[0] } };
+} else if (est.formato === 'meme') {
+  rota = '/post'; corpo = { tipo: 'meme', largura: 1080, altura: 1350, dados: { estilo: c.estilo, titulo: c.titulo, msg1: c.msg1, msg2: c.msg2, foto: fotos[0] } };
 } else if (est.formato === 'frase') {
   rota = '/post'; corpo = { tipo: 'frase', dados: { paleta: pal, rotulo: c.rotulo, titulo: c.titulo, destaque: c.destaque, apoio: c.apoio, cta: c.cta } };
 } else if (est.formato === 'mockup') {

@@ -16,7 +16,7 @@ const estado = {
   conteudo: conteudoAnt, fotos: fotosAnt,
 };
 const precisaTexto = modo !== 'foto' || !conteudoAnt;
-const precisaFotos = ['foto', 'carrossel', 'reels'].includes(formato) && (modo !== 'texto' || !fotosAnt.length);
+const precisaFotos = ['foto', 'carrossel', 'reels', 'meme'].includes(formato) && (modo !== 'texto' || !fotosAnt.length);
 
 const SISTEMA = 'Você é o social media do VCALendar, app brasileiro de agendamento online para profissionais que atendem com hora marcada (salões, estética, cílios, unhas, sobrancelhas, barbearias, clínicas). Público: a PROFISSIONAL dona do negócio.\n' +
   'Tom: próximo, despojado, de quem conhece a rotina do salão. Português do Brasil, frases curtas, sem jargão de tecnologia, no máximo 1 emoji por texto.\n' +
@@ -45,6 +45,7 @@ const FOTO = 'em inglês, cena fotográfica realista de uma profissional brasile
   (CAMPANHA ? ', salão com decoração de Natal elegante e discreta (luzinhas quentes, pequenos enfeites dourados e vermelhos, árvore ao fundo desfocada)' : '');
 const COMUM = '"legenda": "até 450 caracteres, termina chamando para o link na bio", "hashtags": ["5 a 8"], "tema": "assunto em até 6 palavras"';
 const FORMATOS = {
+  meme: 'Meme de Instagram para a profissional da beleza se identificar, comentar e marcar a amiga. JSON: {"estilo": "whatsapp, pov ou faixa", "titulo": "whatsapp: até 5 palavras terminando em dois-pontos, ex.: A lash em dezembro: | pov: começa com POV: e tem até 14 palavras | faixa: até 7 palavras", "msg1": "só no estilo whatsapp: a mensagem que ela recebeu", "msg2": "só no estilo whatsapp: a resposta engraçada dela", "prompt_foto": "em inglês, foto realista e engraçada da cena, com a profissional brasileira (ou cliente) exausta, exagerada ou numa situação absurda do salão, sem texto, sem logotipo", ' + COMUM + '}',
   foto: 'Post quadrado com foto e frase numa caixa colorida. JSON: {"titulo": "até 8 palavras", "destaque": "1 ou 2 palavras do título", "apoio": "até 12 palavras", "cta": "ex.: Leia a legenda", "prompt_foto": "' + FOTO + ', deixando a parte de baixo da imagem limpa", ' + COMUM + '}',
   frase: 'Card colorido só com texto forte. JSON: {"rotulo": "1 a 3 palavras, ex.: Dica rápida", "titulo": "até 8 palavras", "destaque": "1 ou 2 palavras do título", "apoio": "até 14 palavras", "cta": "ex.: Link na bio", ' + COMUM + '}',
   mockup: 'Post com o print real do app num iPhone. JSON: {"titulo": "até 7 palavras", "destaque": "1 ou 2 palavras do título", "apoio": "até 12 palavras", "cta": "ex.: Link na bio", "tela": "uma de: agenda, reserva, caixa, pagina, espera, horarios, cliente, catalogo, servicos (a que mostra a funcionalidade do texto)", ' + COMUM + '}',
@@ -52,7 +53,9 @@ const FORMATOS = {
   reels: 'Reels de slides 9:16 contando uma pequena história (dor, virada com o VCALendar, resultado). JSON: {"cenas": [{"texto": "até 7 palavras", "prompt_foto": "' + FOTO + ', composição vertical"}], "fim": {"texto": "até 6 palavras", "botao": "até 4 palavras"}, ' + COMUM + '} (exatamente 4 cenas)',
 };
 let pedido = FORMATOS[formato] + '\nAssuntos usados recentemente (não repita): ' + (temas.slice(0, 15).join('; ') || 'nenhum') + '.';
-if (CAMPANHA) pedido += '\nCAMPANHA DE FIM DE ANO — o post inteiro (texto, foto e legenda) deve girar em torno disto: ' + CAMPANHA + '. ÂNGULO DESTE POST (o título e o texto falam SÓ disto, não liste todas as funções): ' + ANGULO + '. Copy bonita e emocional, com cara de Natal, sem ficar brega. Na legenda, convide a testar o VCALendar: 30 dias grátis, sem cartão, link na bio.';
+if (formato === 'meme') pedido += '
+REGRAS DO MEME: humor da rotina real, sem cara de propaganda. A imagem NUNCA fala do VCALendar nem vende nada. Escolha UMA situação e uma profissão por vez (manicure, lash, designer de sobrancelha, cabeleireira, esteticista, barbeiro), variando: cliente marcou e não veio; "faz um precinho"; "é só uma sobrancelha rapidinho"; almoço às 16h ou almoço de pipoca; responder WhatsApp de madrugada; cliente atrasada 40 minutos; "tem horário hoje?" às 22h; dor nas costas; a família só te vê em janeiro. Em dezembro puxe a correria de fim de ano. Legenda curta: uma pergunta que puxa comentário (ex.: Por aí também é assim?) e só no fim, de leve, como o VCALendar ajuda, com link na bio.' + (CAMPANHA ? ' Estamos no fim de ano: use a correria de dezembro.' : '');
+else if (CAMPANHA) pedido += '\nCAMPANHA DE FIM DE ANO — o post inteiro (texto, foto e legenda) deve girar em torno disto: ' + CAMPANHA + '. ÂNGULO DESTE POST (o título e o texto falam SÓ disto, não liste todas as funções): ' + ANGULO + '. Copy bonita e emocional, com cara de Natal, sem ficar brega. Na legenda, convide a testar o VCALendar: 30 dias grátis, sem cartão, link na bio.';
 if (modo === 'texto' && conteudoAnt && conteudoAnt.tela) {
   pedido += '\nO print do app vai continuar sendo a tela "' + conteudoAnt.tela + '". Escreva textos NOVOS sobre a funcionalidade que essa tela mostra.';
 } else if (modo === 'texto' && conteudoAnt) {

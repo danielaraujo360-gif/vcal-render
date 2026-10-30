@@ -44,7 +44,7 @@ if (p.precisaTexto) {
   est = { ...est, conteudo: c, custo_texto: (r.usage && r.usage.cost) || 0 };
 }
 const c = est.conteudo;
-const prompts = est.formato === 'foto' ? [c.prompt_foto]
+const prompts = est.formato === 'foto' || est.formato === 'meme' ? [c.prompt_foto]
   : est.formato === 'carrossel' ? [c.capa && c.capa.prompt_foto]
   : est.formato === 'reels' ? (c.cenas || []).map(x => x.prompt_foto) : [];
 const limpos = prompts.filter(Boolean);
