@@ -1,7 +1,7 @@
 // Cria ou atualiza no n8n os workflows da automação de posts do VCALendar (por nome).
 //   VCAL - Erros               -> avisa no Telegram quando algum fluxo falha
 //   VCAL - Gerar Post          -> sub-fluxo: texto (Claude) + fotos (Cloudflare) + montagem (vcal-render) + banco + prévia no Telegram
-//   VCAL - Preparar Dia        -> todo dia 20h (ou à mão pelo webhook) decide os posts de amanhã e chama o Gerar Post
+//   VCAL - Preparar Dia        -> todo dia 21:15, depois de a cota do Cloudflare renovar às 21h (ou à mão pelo webhook) decide os posts de amanhã e chama o Gerar Post
 //   VCAL - Aprovacoes Telegram -> botões da prévia: aprovar, refazer foto/texto/tudo
 import fs from 'node:fs';
 import path from 'node:path';
@@ -108,7 +108,7 @@ function wfGerar(erroId) {
 // ---------------- VCAL - Preparar Dia ----------------
 function wfPreparar(gerarId, erroId) {
   const nodes = [
-    no('Todo Dia 20h', 'n8n-nodes-base.scheduleTrigger', 1.2, 0, 0, { rule: { interval: [{ field: 'cronExpression', expression: '0 20 * * *' }] } }),
+    no('Todo Dia 21h15', 'n8n-nodes-base.scheduleTrigger', 1.2, 0, 0, { rule: { interval: [{ field: 'cronExpression', expression: '15 21 * * *' }] } }),
     no('Gerar Agora', 'n8n-nodes-base.webhook', 2, 0, 200, { httpMethod: 'GET', path: 'vcal-gerar-agora', authentication: 'headerAuth', responseMode: 'onReceived', options: {} }, { webhookId: 'vcal-gerar-agora', credentials: C.render }),
     http('Historico', 240, 100, C.d1, D1, "={{ JSON.stringify({ sql: \"SELECT id, data_publicar, formato, bloco, posicao, status FROM vcal_posts WHERE status IN ('aguardando','aprovado','publicado','gerando') ORDER BY data_publicar DESC, id DESC LIMIT 30; SELECT COUNT(*) AS n FROM vcal_posts WHERE status IN ('aguardando','aprovado','publicado','gerando');\" }) }}"),
     code('Planejar Dia', 480, 100, 'planejar-dia.js'),
@@ -118,7 +118,7 @@ function wfPreparar(gerarId, erroId) {
     tg('Avisar Manutencao', 720, -160, { text: '={{ $json.texto }}', additionalFields: { appendAttribution: false } }),
   ];
   return { name: 'VCAL - Preparar Dia', settings: SETTINGS(erroId), nodes, connections: liga([
-    ['Todo Dia 20h', 'Historico'], ['Todo Dia 20h', 'Saldo OpenRouter'], ['Gerar Agora', 'Historico'], ['Historico', 'Planejar Dia'], ['Planejar Dia', 'Gerar Post'],
+    ['Todo Dia 21h15', 'Historico'], ['Todo Dia 21h15', 'Saldo OpenRouter'], ['Gerar Agora', 'Historico'], ['Historico', 'Planejar Dia'], ['Planejar Dia', 'Gerar Post'],
     ['Saldo OpenRouter', 'Checar Saude'], ['Checar Saude', 'Avisar Manutencao'],
   ]) };
 }
